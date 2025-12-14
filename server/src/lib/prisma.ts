@@ -2,7 +2,10 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import { neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
+
+// Use require for ws to avoid TypeScript declaration issues
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ws = require('ws');
 
 neonConfig.webSocketConstructor = ws;
 
