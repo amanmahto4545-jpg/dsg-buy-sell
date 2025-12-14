@@ -1,0 +1,96 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- CORE MODELS ---
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  password     String         // Hashed password
+  name         String
+  phone        String?
+  profilePhoto String?
+  location     String         // User's city
+
+  listings      Product[]
+  conversations Conversation[] // Conversations where this user is either buyer or seller
+  messagesSent  Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  title       String   @db.VarChar(255)
+  description String
+  price       Float
+  location    String   // City/area of listing
+  images      String[] // Array of image URLs
+  isSold      Boolean  @default(false)
+
+  // Relations
+  sellerId   String
+  seller     User     @relation(fields: [sellerId], references: [id])
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  conversations Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Indexing for search/filters (Home Feed requirement)
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([location])
+}
+
+// --- CHAT MODELS ---
+
+model Conversation {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Buyer and Seller (Note: Seller is also defined on the Product model)
+  buyerId  String
+  buyer    User    @relation(fields: [buyerId], references: [id])
+  sellerId String?
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ensure a unique conversation per product/buyer pair
+  @@unique([productId, buyerId])
+  @@index([buyerId])
+}
+
+model Message {
+  id      String  @id @default(uuid())
+  content String
+  isRead  Boolean @default(false)
+
+  // Relations
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  createdAt DateTime @default(now())
+}
