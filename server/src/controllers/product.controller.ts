@@ -125,7 +125,6 @@ export const getProductById = async (req: Request, res: Response) => {
                         id: true,
                         name: true,
                         phone: true,
-                        profilePhoto: true,
                         location: true
                     }
                 }
