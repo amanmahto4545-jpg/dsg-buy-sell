@@ -183,6 +183,20 @@ export const deleteProduct = async (req: Request, res: Response) => {
             return res.status(403).json({ message: 'Forbidden: You do not own this product.' });
         }
 
+        // Delete related records first (to avoid foreign key constraint errors)
+        // 1. Delete all favorites for this product
+        await prisma.favorite.deleteMany({ where: { productId } });
+
+        // 2. Delete all messages in conversations for this product
+        const conversations = await prisma.conversation.findMany({ where: { productId } });
+        for (const conv of conversations) {
+            await prisma.message.deleteMany({ where: { conversationId: conv.id } });
+        }
+
+        // 3. Delete all conversations for this product
+        await prisma.conversation.deleteMany({ where: { productId } });
+
+        // 4. Finally delete the product
         await prisma.product.delete({ where: { id: productId } });
 
         return res.status(204).send();

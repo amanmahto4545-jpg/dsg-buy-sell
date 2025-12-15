@@ -142,3 +142,71 @@ export const sendMessage = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Internal server error sending message.' });
     }
 };
+
+// --- 5. GET /api/v1/chat/unseen/count (Protected) ---
+// Returns count of unread messages for the user
+export const getUnseenMessageCount = async (req: Request, res: Response) => {
+    const userId = req.userId as string;
+
+    try {
+        // Find conversations where user is a participant
+        const conversations = await prisma.conversation.findMany({
+            where: {
+                OR: [
+                    { buyerId: userId },
+                    { sellerId: userId },
+                ],
+            },
+            select: { id: true },
+        });
+
+        const conversationIds = conversations.map(c => c.id);
+
+        // Count unread messages where user is NOT the sender
+        const unreadMessagesCount = await prisma.message.count({
+            where: {
+                conversationId: { in: conversationIds },
+                senderId: { not: userId },
+                isRead: false,
+            },
+        });
+
+        return res.status(200).json({ count: unreadMessagesCount });
+    } catch (error) {
+        console.error('Get Unseen Count Error:', error);
+        return res.status(500).json({ message: 'Internal server error fetching count.' });
+    }
+};
+
+// --- 6. PUT /api/v1/chat/conversations/:id/read (Protected) ---
+// Marks all messages in a conversation as read for the user
+export const markMessagesAsRead = async (req: Request, res: Response) => {
+    const conversationId = req.params.id;
+    const userId = req.userId as string;
+
+    try {
+        // 1. Verify User is a participant
+        const conversation = await prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+
+        if (!conversation || (conversation.buyerId !== userId && conversation.sellerId !== userId)) {
+            return res.status(403).json({ message: 'Forbidden: Not a participant in this conversation.' });
+        }
+
+        // 2. Mark all messages from other user as read
+        await prisma.message.updateMany({
+            where: {
+                conversationId,
+                senderId: { not: userId },
+                isRead: false,
+            },
+            data: { isRead: true },
+        });
+
+        return res.status(200).json({ message: 'Messages marked as read.' });
+    } catch (error) {
+        console.error('Mark as Read Error:', error);
+        return res.status(500).json({ message: 'Internal server error marking messages as read.' });
+    }
+};

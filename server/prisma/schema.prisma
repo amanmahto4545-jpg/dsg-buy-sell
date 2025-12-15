@@ -16,12 +16,12 @@ model User {
   password     String         // Hashed password
   name         String
   phone        String?
-  profilePhoto String?
   location     String         // User's city
 
   listings      Product[]
   conversations Conversation[] // Conversations where this user is either buyer or seller
   messagesSent  Message[]
+  favorites     Favorite[]     // User's favorited products
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,6 +49,7 @@ model Product {
   category   Category @relation(fields: [categoryId], references: [id])
 
   conversations Conversation[]
+  favoritedBy   Favorite[]     // Users who favorited this product
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -93,4 +94,17 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+// --- FAVORITES MODEL ---
+
+model Favorite {
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Composite key ensures a user can only favorite a product once
+  @@id([userId, productId])
 }

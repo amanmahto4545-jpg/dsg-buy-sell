@@ -4,6 +4,7 @@ import authRouter from './routes/auth.routes';
 import productRouter from './routes/product.routes';
 import categoryRouter from './routes/category.routes';
 import chatRouter from './routes/chat.routes';
+import favoriteRouter from './routes/favorite.routes';
 import { seedCategories } from './data/categories.data';
 import prisma from './lib/prisma';
 
@@ -22,11 +23,12 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/chat', chatRouter);
+app.use('/api/v1/favorites', favoriteRouter);
 
 app.get('/', (_req: Request, res: Response) => {
     res.send('DSG Buy & Sell API is running!');
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
