@@ -29,6 +29,7 @@ app.get('/', (_req: Request, res: Response) => {
     res.send('DSG Buy & Sell API is running!');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+const port = Number(PORT);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${port}`);
 });
